@@ -34,12 +34,15 @@ class Vhost
      * @return string
      */
     public function build() {
+        $proxy = false;
         $serverName = "";
         $serverAlias = "";
         $serverAdmin = "";
         $documentRoot = "";
+        $proxySettings = "";
         $proxyPass = "";
         $proxyPassReverse = "";
+        
         
         if (!empty($this->serverName)) {
             $serverName = "ServerName " . $this->serverName;
