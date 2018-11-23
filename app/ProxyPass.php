@@ -6,6 +6,8 @@ class ProxyPass
 {
     protected $redirectFrom = "";
     protected $redirectTo = "";
+    protected $reverseRedirectFrom = "";
+    protected $reverseRedirectTo = "";
     protected $https = false;
     
     /**
@@ -48,6 +50,50 @@ class ProxyPass
     public function setRedirectTo(string $redirectTo): ProxyPass
     {
         $this->redirectTo = $redirectTo;
+        
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getReverseRedirectFrom(): string
+    {
+        return $this->reverseRedirectFrom;
+    }
+    
+    /**
+     * @param string $redirectFrom
+     * @return ProxyPass
+     */
+    public function setReverseRedirectFrom(string $redirectFrom): ProxyPass
+    {
+        $this->reverseRedirectFrom = $redirectFrom;
+        
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getReverseRedirectTo(): string
+    {
+        $protocol = "http://";
+        
+        if ($this->https) {
+            $protocol = "https://";
+        }
+        
+        return $protocol . $this->reverseRedirectTo;
+    }
+    
+    /**
+     * @param string $redirectTo
+     * @return ProxyPass
+     */
+    public function setReverseRedirectTo(string $redirectTo): ProxyPass
+    {
+        $this->reverseRedirectTo = $redirectTo;
         
         return $this;
     }
