@@ -18,28 +18,76 @@ class Vhost
         return $this->build();
     }
     
-    public function save($force = true)
-    {
-        //todo: Check if serverName.conf already exists
-        //todo: Overwrite if force = true
+    /**
+     * @param string $serverName
+     * @return $this
+     */
+    public function load(string $serverName) {
+        //todo: implement at some point
+        
+        return $this;
     }
     
-    public function activate()
+    public function save(bool $force = true): bool
     {
-        //todo: Create Symlink to activate the site
-        //todo: Reload Apache2 service
+        $filePath = sprintf("/etc/apache2/sites-available/%s.conf",
+            $this->serverName
+        );
+        
+        if (empty($this->serverName) || (file_exists($filePath  && $force == false))) {
+            return false;
+        }
+        
+        $file = fopen($filePath, "w+");
+        
+        if (!$file || !fwrite($file, $this->build())) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * @param bool $force
+     * @return bool
+     */
+    public function activate(bool $force = true): bool
+    {
+        $filePath = sprintf("/etc/apache2/sites-available/%s.conf",
+            $this->serverName
+        );
+        $symlinkPath = sprintf("/etc/apache2/sites-enabled/%s.conf",
+            $this->serverName
+        );
+        
+        if (empty($this->serverName) || (!file_exists($filePath))) {
+            return false;
+        }
+    
+        if (file_exists($symlinkPath)) {
+            if (!$force) {
+                exec('sudo /etc/init.d/apache2 reload');
+                
+                return false;
+            }
+    
+            unlink($symlinkPath);
+        }
+        
+        symlink($filePath, $symlinkPath);
+        var_dump(shell_exec('sudo /etc/init.d/apache2 reload'));
+        
+        return true;
     }
     
     /**
      * @return string
      */
     public function build() {
-        $proxy = false;
         $serverName = "";
         $serverAlias = "";
         $serverAdmin = "";
         $documentRoot = "";
-        $proxySettings = "";
         $proxyPass = "";
         $proxyPassReverse = "";
         
@@ -57,28 +105,24 @@ class Vhost
             $documentRoot = "documentRoot " . $this->documentRoot;
         }
         if (!empty($this->proxyPass)) {
-            $proxyPass = sprintf('ProxyPass "%s" "%s"',
+            $proxyPass = sprintf('
+                DefaultType none
+                RewriteEngine on
+                AllowEncodedSlashes on
+                RequestHeader set X-Forwarded-Proto "http"
+                RewriteCond %%{QUERY_STRING} transport=polling
+                RewriteRule /(.*)$ http://%s/$1 [P]
+                ProxyRequests off
+                ProxyPass "%s" "%s/"',
+                $this->proxyPass->getRedirectTo(),
                 $this->proxyPass->getRedirectFrom(),
                 $this->proxyPass->getRedirectTo()
             );
         }
         if (!empty($this->proxyPassReverse)) {
-            $proxyPassReverse = sprintf('ProxyPassReverse "%s" "%s"',
+            $proxyPassReverse = sprintf('ProxyPassReverse "%s" "%s/"',
                 $this->proxyPass->getRedirectFrom(),
                 $this->proxyPass->getRedirectTo()
-            );
-        }
-        
-        if ($proxySettings) {
-            sprintf('
-            DefaultType none
-            RewriteEngine on
-            AllowEncodedSlashes on
-            RequestHeader set X-Forwarded-Proto "http"
-            RewriteCond %{QUERY_STRING} transport=polling
-            RewriteRule /(.*)$ http://%s/$1 [P]
-            ProxyRequests off',
-            $this->proxyPass->getRedirectTo()
             );
         }
         

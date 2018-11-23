@@ -6,6 +6,7 @@ class ProxyPass
 {
     protected $redirectFrom = "";
     protected $redirectTo = "";
+    protected $https = false;
     
     /**
      * @return string
@@ -31,7 +32,13 @@ class ProxyPass
      */
     public function getRedirectTo(): string
     {
-        return $this->redirectTo;
+        $protocol = "http://";
+    
+        if ($this->https) {
+            $protocol = "https://";
+        }
+    
+        return $protocol . $this->redirectTo;
     }
     
     /**
@@ -44,5 +51,25 @@ class ProxyPass
         
         return $this;
     }
+    
+    /**
+     * @return bool
+     */
+    public function isHttps(): bool
+    {
+        return $this->https;
+    }
+    
+    /**
+     * @param bool $https
+     * @return ProxyPass
+     */
+    public function setHttps(bool $https): ProxyPass
+    {
+        $this->https = $https;
+        
+        return $this;
+    }
+    
     
 }
