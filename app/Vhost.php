@@ -10,22 +10,10 @@ class Vhost
     protected $documentRoot = "";
     /** @var ProxyPass */
     protected $proxyPass;
-    /** @var ProxyPassReverse */
-    protected $proxyPassReverse;
     
     public function __toString()
     {
         return $this->build();
-    }
-    
-    /**
-     * @param string $serverName
-     * @return $this
-     */
-    public function load(string $serverName) {
-        //todo: implement at some point
-        
-        return $this;
     }
     
     public function save(bool $force = true): bool
@@ -75,7 +63,7 @@ class Vhost
         }
         
         symlink($filePath, $symlinkPath);
-        var_dump(shell_exec('sudo /etc/init.d/apache2 reload'));
+        shell_exec('sudo /etc/init.d/apache2 reload');
         
         return true;
     }
@@ -119,7 +107,7 @@ class Vhost
                 $this->proxyPass->getRedirectTo()
             );
         }
-        if (!empty($this->proxyPass->getReverseRedirectFrom())) {
+        if (!empty($this->proxyPass->getReverseRedirectFrom()) && !empty($this->proxyPass->getReverseRedirectTo())) {
             $proxyPassReverse = sprintf('ProxyPassReverse "%s" "%s/"',
                 $this->proxyPass->getReverseRedirectFrom(),
                 $this->proxyPass->getReverseRedirectTo()
@@ -264,29 +252,4 @@ class Vhost
         
         return $this;
     }
-    
-    /**
-     * @return ProxyPassReverse
-     */
-    public function getProxyPassReverse(): ProxyPassReverse
-    {
-        return $this->proxyPassReverse;
-    }
-    
-    /**
-     * @param ProxyPassReverse $proxyPassReverse
-     * @return Vhost
-     * @throws \InvalidArgumentException
-     */
-    public function setProxyPassReverse(ProxyPassReverse $proxyPassReverse): Vhost
-    {
-        if (empty($proxyPassReverse->getRedirectTo()) || empty($proxyPassReverse->getRedirectFrom())) {
-            throw new \InvalidArgumentException('ProxyPassReverse needs to be filled!');
-        }
-        $this->proxyPassReverse = $proxyPassReverse;
-        
-        return $this;
-    }
-    
-    
 }
