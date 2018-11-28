@@ -4,10 +4,15 @@ namespace VhostManager;
 
 class ProxyPass
 {
-    protected $redirectFrom = "";
-    protected $redirectTo = "";
-    protected $reverseRedirectFrom = "";
-    protected $reverseRedirectTo = "";
+    /** @var string */
+    protected $redirectFrom = '';
+    /** @var string */
+    protected $redirectTo = '';
+    /** @var string */
+    protected $reverseRedirectFrom = '';
+    /** @var string */
+    protected $reverseRedirectTo = '';
+    /** @var bool */
     protected $https = false;
     
     /**
@@ -34,13 +39,7 @@ class ProxyPass
      */
     public function getRedirectTo(): string
     {
-        $protocol = "http://";
-    
-        if ($this->https) {
-            $protocol = "https://";
-        }
-    
-        return $protocol . $this->redirectTo;
+        return ($this->https ? 'https://' : 'http://') . $this->redirectTo;
     }
     
     /**
@@ -78,13 +77,7 @@ class ProxyPass
      */
     public function getReverseRedirectTo(): string
     {
-        $protocol = "http://";
-        
-        if ($this->https) {
-            $protocol = "https://";
-        }
-        
-        return $protocol . $this->reverseRedirectTo;
+        return ($this->https ? 'https://' : 'http://') . $this->reverseRedirectTo;
     }
     
     /**
@@ -110,7 +103,7 @@ class ProxyPass
      * @param bool $https
      * @return ProxyPass
      */
-    public function setHttps(bool $https): ProxyPass
+    public function useHttps(bool $https): ProxyPass
     {
         $this->https = $https;
         

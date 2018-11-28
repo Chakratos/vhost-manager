@@ -3,22 +3,34 @@ namespace VhostManager;
 
 class Vhost
 {
+    /** @var int */
     protected $port = 80;
-    protected $serverName = "";
-    protected $serverAlias = "";
-    protected $serverAdmin = "";
-    protected $documentRoot = "";
+    /** @var string */
+    protected $serverName = '';
+    /** @var string */
+    protected $serverAlias = '';
+    /** @var string */
+    protected $serverAdmin = '';
+    /** @var string */
+    protected $documentRoot = '';
     /** @var ProxyPass */
     protected $proxyPass;
     
+    /**
+     * @return string
+     */
     public function __toString()
     {
         return $this->build();
     }
     
+    /**
+     * @param bool $force
+     * @return bool
+     */
     public function save(bool $force = true): bool
     {
-        $filePath = sprintf("/etc/apache2/sites-available/%s.conf",
+        $filePath = sprintf('/etc/apache2/sites-available/%s.conf',
             $this->serverName
         );
         
@@ -26,7 +38,7 @@ class Vhost
             return false;
         }
         
-        $file = fopen($filePath, "w+");
+        $file = fopen($filePath, 'w+');
         
         if (!$file || !fwrite($file, $this->build())) {
             return false;
@@ -41,10 +53,10 @@ class Vhost
      */
     public function activate(bool $force = true): bool
     {
-        $filePath = sprintf("/etc/apache2/sites-available/%s.conf",
+        $filePath = sprintf('/etc/apache2/sites-available/%s.conf',
             $this->serverName
         );
-        $symlinkPath = sprintf("/etc/apache2/sites-enabled/%s.conf",
+        $symlinkPath = sprintf('/etc/apache2/sites-enabled/%s.conf',
             $this->serverName
         );
         
@@ -72,25 +84,24 @@ class Vhost
      * @return string
      */
     public function build() {
-        $serverName = "";
-        $serverAlias = "";
-        $serverAdmin = "";
-        $documentRoot = "";
-        $proxyPass = "";
-        $proxyPassReverse = "";
-        
+        $serverName = '';
+        $serverAlias = '';
+        $serverAdmin = '';
+        $documentRoot = '';
+        $proxyPass = '';
+        $proxyPassReverse = '';
         
         if (!empty($this->serverName)) {
-            $serverName = "ServerName " . $this->serverName;
+            $serverName = 'ServerName ' . $this->serverName;
         }
         if (!empty($this->serverAlias)) {
-            $serverAlias = "ServerAlias " . $this->serverAlias;
+            $serverAlias = 'ServerAlias ' . $this->serverAlias;
         }
         if (!empty($this->serverAdmin)) {
-            $serverAdmin = "ServerAdmin " . $this->serverAdmin;
+            $serverAdmin = 'ServerAdmin ' . $this->serverAdmin;
         }
         if (!empty($this->documentRoot)) {
-            $documentRoot = "documentRoot " . $this->documentRoot;
+            $documentRoot = 'documentRoot ' . $this->documentRoot;
         }
         if (!empty($this->proxyPass)) {
             $proxyPass = sprintf('
@@ -101,14 +112,14 @@ class Vhost
                 RewriteCond %%{QUERY_STRING} transport=polling
                 RewriteRule /(.*)$ http://%s/$1 [P]
                 ProxyRequests off
-                ProxyPass "%s" "%s/"',
+                ProxyPass "%s" "%s"',
                 $this->proxyPass->getRedirectTo(),
                 $this->proxyPass->getRedirectFrom(),
                 $this->proxyPass->getRedirectTo()
             );
         }
         if (!empty($this->proxyPass->getReverseRedirectFrom()) && !empty($this->proxyPass->getReverseRedirectTo())) {
-            $proxyPassReverse = sprintf('ProxyPassReverse "%s" "%s/"',
+            $proxyPassReverse = sprintf('ProxyPassReverse "%s" "%s"',
                 $this->proxyPass->getReverseRedirectFrom(),
                 $this->proxyPass->getReverseRedirectTo()
             );

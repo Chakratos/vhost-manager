@@ -13,17 +13,17 @@ Add the following to your /etc/sudoers file:
 *-*Usage*-*
 
     $proxyPass = new \VhostManager\ProxyPass();
-    $proxyPass->setRedirectFrom("/")
-        ->setRedirectTo("127.0.0.1:8088")
-        ->setReverseRedirectFrom("/")
-        ->setReverseRedirectTo("127.0.0.1:8088");
+    $proxyPass->setRedirectFrom('/')
+        ->setRedirectTo('127.0.0.1:8088')
+        ->setReverseRedirectFrom('/')
+        ->setReverseRedirectTo('127.0.0.1:8088');
 
     $vhost = new \VhostManager\Vhost();
     $vhost->setProxyPass($proxyPass)
         ->setPort(80)
-        ->setServerAdmin("Benjamin.Schaffrath@jtl-software.com")
-        ->setServerName("first.test")
-        ->setServerAlias("www.first.test")
+        ->setServerAdmin('Benjamin.Schaffrath@jtl-software.com')
+        ->setServerName('first.test')
+        ->setServerAlias('www.first.test')
         ->save(true);
 
     $vhost->activate();
