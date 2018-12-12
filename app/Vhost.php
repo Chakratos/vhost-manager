@@ -110,16 +110,16 @@ class Vhost
                 AllowEncodedSlashes on
                 RequestHeader set X-Forwarded-Proto "http"
                 RewriteCond %%{QUERY_STRING} transport=polling
-                RewriteRule /(.*)$ http://%s/$1 [P]
+                RewriteRule /(.*)$ %s/$1 [P]
                 ProxyRequests off
-                ProxyPass "%s" "%s"',
+                ProxyPass "%s" "%s/"',
                 $this->proxyPass->getRedirectTo(),
                 $this->proxyPass->getRedirectFrom(),
                 $this->proxyPass->getRedirectTo()
             );
         }
         if (!empty($this->proxyPass->getReverseRedirectFrom()) && !empty($this->proxyPass->getReverseRedirectTo())) {
-            $proxyPassReverse = sprintf('ProxyPassReverse "%s" "%s"',
+            $proxyPassReverse = sprintf('ProxyPassReverse "%s" "%s/"',
                 $this->proxyPass->getReverseRedirectFrom(),
                 $this->proxyPass->getReverseRedirectTo()
             );
