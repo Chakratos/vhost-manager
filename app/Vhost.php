@@ -119,7 +119,7 @@ class Vhost
                 $this->proxyPass->getRedirectTo()
             );
         }
-        if (!empty($this->proxyPass->getReverseRedirectFrom()) && !empty($this->proxyPass->getReverseRedirectTo())) {
+        if (isset($this->proxyPass) && !empty($this->proxyPass->getReverseRedirectFrom()) && !empty($this->proxyPass->getReverseRedirectTo())) {
             $proxyPassReverse = sprintf('ProxyPassReverse "%s" "%s/"',
                 $this->proxyPass->getReverseRedirectFrom(),
                 $this->proxyPass->getReverseRedirectTo()
