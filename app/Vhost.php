@@ -112,6 +112,7 @@ class Vhost
                 RewriteCond %%{QUERY_STRING} transport=polling
                 RewriteRule /(.*)$ %s/$1 [P]
                 ProxyRequests off
+                ProxyPreserveHost On
                 ProxyPass "%s" "%s/"',
                 $this->proxyPass->getRedirectTo(),
                 $this->proxyPass->getRedirectFrom(),
