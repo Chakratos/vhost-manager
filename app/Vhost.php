@@ -93,7 +93,7 @@ class Vhost
         return unlink($filePath);
     }
     
-    public static function delete(string $serverName, bool $force) {
+    public static function delete(string $serverName, bool $deactivate) {
         $filePath = sprintf('/etc/apache2/sites-available/%s.conf',
             $serverName
         );
@@ -102,7 +102,7 @@ class Vhost
             return false;
         }
     
-        if ($force) {
+        if ($deactivate) {
             self::deactivate($serverName);
         }
     
