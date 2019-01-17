@@ -80,6 +80,35 @@ class Vhost
         return true;
     }
     
+    public static function deactivate($serverName): bool
+    {
+        $filePath = sprintf('/etc/apache2/sites-enabled/%s.conf',
+            $serverName
+        );
+    
+        if (!file_exists($filePath)) {
+            return false;
+        }
+        
+        return unlink($filePath);
+    }
+    
+    public static function delete(string $serverName, bool $force) {
+        $filePath = sprintf('/etc/apache2/sites-available/%s.conf',
+            $serverName
+        );
+        
+        if (!file_exists($filePath)) {
+            return false;
+        }
+    
+        if ($force) {
+            self::deactivate($serverName);
+        }
+    
+        return unlink($filePath);
+    }
+    
     /**
      * @return string
      */
