@@ -142,6 +142,7 @@ class Vhost
                 RewriteRule /(.*)$ %s/$1 [P]
                 ProxyRequests off
                 ProxyPreserveHost On
+                ProxyAddHeaders Off
                 ProxyPass "%s" "%s/"',
                 $this->proxyPass->getRedirectTo(),
                 $this->proxyPass->getRedirectFrom(),
