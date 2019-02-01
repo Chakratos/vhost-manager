@@ -24,6 +24,7 @@ Add the following to your /etc/sudoers file:
         ->setServerAdmin('Benjamin.Schaffrath@jtl-software.com')
         ->setServerName('first.test')
         ->setServerAlias('www.first.test')
+        ->setPhpVersion('7.1')
         ->save(true);
 
     $vhost->activate();

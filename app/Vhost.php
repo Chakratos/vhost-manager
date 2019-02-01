@@ -13,6 +13,8 @@ class Vhost
     protected $serverAdmin = '';
     /** @var string */
     protected $documentRoot = '';
+    /** @var string */
+    protected $phpVersion = '';
     /** @var ProxyPass */
     protected $proxyPass;
     
@@ -117,6 +119,7 @@ class Vhost
         $serverAlias = '';
         $serverAdmin = '';
         $documentRoot = '';
+        $phpVersion = '';
         $proxyPass = '';
         $proxyPassReverse = '';
         
@@ -131,6 +134,12 @@ class Vhost
         }
         if (!empty($this->documentRoot)) {
             $documentRoot = 'documentRoot ' . $this->documentRoot;
+        }
+        if (preg_match('^\d\.\d^', $this->phpVersion)) {
+            $phpVersion = sprintf(
+                'Include conf-available/php%s-fpm.conf',
+                $this->phpVersion
+            );
         }
         if (!empty($this->proxyPass)) {
             $proxyPass = sprintf('
@@ -165,12 +174,14 @@ class Vhost
                 %s
                 %s
                 %s
+                %s
             </VirtualHost>',
             $this->port,
             $serverName,
             $serverAlias,
             $serverAdmin,
             $documentRoot,
+            $phpVersion,
             $proxyPass,
             $proxyPassReverse
         );
@@ -269,6 +280,25 @@ class Vhost
     public function setServerAlias(string $serverAlias): Vhost
     {
         $this->serverAlias = $serverAlias;
+        
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPhpVersion() : string
+    {
+        return $this->phpVersion;
+    }
+    
+    /**
+     * @param string $phpVersion
+     * @return Vhost
+     */
+    public function setPhpVersion(string $phpVersion) : Vhost
+    {
+        $this->phpVersion = $phpVersion;
         
         return $this;
     }
