@@ -91,7 +91,8 @@ class Vhost
         if (!file_exists($filePath)) {
             return false;
         }
-        
+    
+        shell_exec('sudo /etc/init.d/apache2 reload');
         return unlink($filePath);
     }
     
@@ -108,7 +109,37 @@ class Vhost
             self::deactivate($serverName);
         }
     
+        shell_exec('sudo /etc/init.d/apache2 reload');
         return unlink($filePath);
+    }
+    
+    public static function getAvailableVhosts(): array
+    {
+        $hosts = glob('/etc/apache2/sites-available/*');
+        $result =[];
+        
+        foreach ($hosts as $host) {
+            $result[] = str_replace('/etc/apache2/sites-available/', '', $host);
+        }
+        
+        return $result;
+    }
+    
+    public static function getEnabledVhosts(): array
+    {
+        $hosts = glob('/etc/apache2/sites-enabled/*');
+        $result =[];
+    
+        foreach ($hosts as $host) {
+            $result[] = str_replace('/etc/apache2/sites-enabled/', '', $host);
+        }
+    
+        return $result;
+    }
+    
+    public static function getDisabledVhosts(): array
+    {
+        return array_diff(self::getAvailableVhosts(), self::getEnabledVhosts());
     }
     
     /**
