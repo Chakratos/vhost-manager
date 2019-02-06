@@ -82,18 +82,39 @@ class Vhost
         return true;
     }
     
-    public static function deactivate($serverName): bool
+    public static function enable($serverName): bool
+    {
+        $filePath = sprintf('/etc/apache2/sites-available/%s.conf',
+            $serverName
+        );
+        $symlinkPath = sprintf('/etc/apache2/sites-enabled/%s.conf',
+            $serverName
+        );
+        
+        if (empty($serverName) || (!file_exists($filePath)) || file_exists($symlinkPath)) {
+            return false;
+        }
+        
+        symlink($filePath, $symlinkPath);
+        shell_exec('sudo /etc/init.d/apache2 reload');
+        
+        return true;
+    }
+    
+    public static function disable($serverName): bool
     {
         $filePath = sprintf('/etc/apache2/sites-enabled/%s.conf',
             $serverName
         );
-    
+        
         if (!file_exists($filePath)) {
             return false;
         }
-    
+        
+        unlink($filePath);
         shell_exec('sudo /etc/init.d/apache2 reload');
-        return unlink($filePath);
+        
+        return true;
     }
     
     public static function delete(string $serverName, bool $deactivate) {
@@ -104,13 +125,15 @@ class Vhost
         if (!file_exists($filePath)) {
             return false;
         }
-    
+        
         if ($deactivate) {
-            self::deactivate($serverName);
+            self::disable($serverName);
         }
-    
+        
+        unlink($filePath);
         shell_exec('sudo /etc/init.d/apache2 reload');
-        return unlink($filePath);
+        
+        return true;
     }
     
     public static function getAvailableVhosts(): array
