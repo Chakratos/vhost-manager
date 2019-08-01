@@ -1,6 +1,6 @@
 {
     "name": "chakratos/vhost-manager",
-    "type": "project",
+    "type": "library",
     "license": "MIT",
     "authors": [
         {
