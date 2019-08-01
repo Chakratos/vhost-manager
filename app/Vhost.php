@@ -13,6 +13,8 @@ class Vhost
     protected $serverAdmin = '';
     /** @var string */
     protected $documentRoot = '';
+    /** @var string */
+    protected $phpVersion = '';
     /** @var ProxyPass */
     protected $proxyPass;
     
@@ -80,17 +82,39 @@ class Vhost
         return true;
     }
     
-    public static function deactivate($serverName): bool
+    public static function enable($serverName): bool
+    {
+        $filePath = sprintf('/etc/apache2/sites-available/%s.conf',
+            $serverName
+        );
+        $symlinkPath = sprintf('/etc/apache2/sites-enabled/%s.conf',
+            $serverName
+        );
+        
+        if (empty($serverName) || (!file_exists($filePath)) || file_exists($symlinkPath)) {
+            return false;
+        }
+        
+        symlink($filePath, $symlinkPath);
+        shell_exec('sudo /etc/init.d/apache2 reload');
+        
+        return true;
+    }
+    
+    public static function disable($serverName): bool
     {
         $filePath = sprintf('/etc/apache2/sites-enabled/%s.conf',
             $serverName
         );
-    
+        
         if (!file_exists($filePath)) {
             return false;
         }
         
-        return unlink($filePath);
+        unlink($filePath);
+        shell_exec('sudo /etc/init.d/apache2 reload');
+        
+        return true;
     }
     
     public static function delete(string $serverName, bool $deactivate) {
@@ -101,12 +125,44 @@ class Vhost
         if (!file_exists($filePath)) {
             return false;
         }
-    
+        
         if ($deactivate) {
-            self::deactivate($serverName);
+            self::disable($serverName);
+        }
+        
+        unlink($filePath);
+        shell_exec('sudo /etc/init.d/apache2 reload');
+        
+        return true;
+    }
+    
+    public static function getAvailableVhosts(): array
+    {
+        $hosts = glob('/etc/apache2/sites-available/*');
+        $result =[];
+        
+        foreach ($hosts as $host) {
+            $result[] = str_replace('/etc/apache2/sites-available/', '', $host);
+        }
+        
+        return $result;
+    }
+    
+    public static function getEnabledVhosts(): array
+    {
+        $hosts = glob('/etc/apache2/sites-enabled/*');
+        $result =[];
+    
+        foreach ($hosts as $host) {
+            $result[] = str_replace('/etc/apache2/sites-enabled/', '', $host);
         }
     
-        return unlink($filePath);
+        return $result;
+    }
+    
+    public static function getDisabledVhosts(): array
+    {
+        return array_diff(self::getAvailableVhosts(), self::getEnabledVhosts());
     }
     
     /**
@@ -117,6 +173,7 @@ class Vhost
         $serverAlias = '';
         $serverAdmin = '';
         $documentRoot = '';
+        $phpVersion = '';
         $proxyPass = '';
         $proxyPassReverse = '';
         
@@ -131,6 +188,12 @@ class Vhost
         }
         if (!empty($this->documentRoot)) {
             $documentRoot = 'documentRoot ' . $this->documentRoot;
+        }
+        if (preg_match('^\d\.\d^', $this->phpVersion)) {
+            $phpVersion = sprintf(
+                'Include conf-available/php%s-fpm.conf',
+                $this->phpVersion
+            );
         }
         if (!empty($this->proxyPass)) {
             $proxyPass = sprintf('
@@ -165,6 +228,7 @@ class Vhost
                 %s
                 %s
                 %s
+                %s
             </VirtualHost>',
             $this->serverName,
             $this->port,
@@ -172,6 +236,7 @@ class Vhost
             $serverAlias,
             $serverAdmin,
             $documentRoot,
+            $phpVersion,
             $proxyPass,
             $proxyPassReverse
         );
@@ -270,6 +335,25 @@ class Vhost
     public function setServerAlias(string $serverAlias): Vhost
     {
         $this->serverAlias = $serverAlias;
+        
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getPhpVersion() : string
+    {
+        return $this->phpVersion;
+    }
+    
+    /**
+     * @param string $phpVersion
+     * @return Vhost
+     */
+    public function setPhpVersion(string $phpVersion) : Vhost
+    {
+        $this->phpVersion = $phpVersion;
         
         return $this;
     }
