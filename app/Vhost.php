@@ -391,7 +391,7 @@ class Vhost
     {
         $combinedVhost = "";
         foreach ($vhosts as $vhost) {
-            $combinedVhost .= $vhost->build() . '\\n';
+            $combinedVhost .= $vhost->build();
         }
     
         $filePath = sprintf('/etc/apache2/sites-available/%s.conf',
