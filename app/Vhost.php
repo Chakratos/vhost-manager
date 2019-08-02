@@ -1,10 +1,15 @@
 <?php
+
 namespace VhostManager;
 
 class Vhost
 {
     /** @var int */
     protected $port = 80;
+    /** @var string */
+    protected $listenOn = '*';
+    /** @var string */
+    protected $customDirectives = '';
     /** @var string */
     protected $serverName = '';
     /** @var string */
@@ -36,7 +41,7 @@ class Vhost
             $this->serverName
         );
         
-        if (empty($this->serverName) || (file_exists($filePath  && $force == false))) {
+        if (empty($this->serverName) || (file_exists($filePath && $force == false))) {
             return false;
         }
         
@@ -65,14 +70,14 @@ class Vhost
         if (empty($this->serverName) || (!file_exists($filePath))) {
             return false;
         }
-    
+        
         if (file_exists($symlinkPath)) {
             if (!$force) {
                 exec('sudo /etc/init.d/apache2 reload');
                 
                 return false;
             }
-    
+            
             unlink($symlinkPath);
         }
         
@@ -117,7 +122,8 @@ class Vhost
         return true;
     }
     
-    public static function delete(string $serverName, bool $deactivate) {
+    public static function delete(string $serverName, bool $deactivate)
+    {
         $filePath = sprintf('/etc/apache2/sites-available/%s.conf',
             $serverName
         );
@@ -139,7 +145,7 @@ class Vhost
     public static function getAvailableVhosts(): array
     {
         $hosts = glob('/etc/apache2/sites-available/*');
-        $result =[];
+        $result = [];
         
         foreach ($hosts as $host) {
             $result[] = str_replace('/etc/apache2/sites-available/', '', $host);
@@ -151,12 +157,12 @@ class Vhost
     public static function getEnabledVhosts(): array
     {
         $hosts = glob('/etc/apache2/sites-enabled/*');
-        $result =[];
-    
+        $result = [];
+        
         foreach ($hosts as $host) {
             $result[] = str_replace('/etc/apache2/sites-enabled/', '', $host);
         }
-    
+        
         return $result;
     }
     
@@ -168,7 +174,8 @@ class Vhost
     /**
      * @return string
      */
-    public function build() {
+    public function build()
+    {
         $serverName = '';
         $serverAlias = '';
         $serverAdmin = '';
@@ -200,13 +207,14 @@ class Vhost
                 DefaultType none
                 RewriteEngine on
                 AllowEncodedSlashes on
-                RequestHeader set X-Forwarded-Proto "http"
+                RequestHeader set X-Forwarded-Proto "%s"
                 RewriteCond %%{QUERY_STRING} transport=polling
                 RewriteRule /(.*)$ %s/$1 [P]
                 ProxyRequests off
                 ProxyPreserveHost On
                 ProxyAddHeaders Off
                 ProxyPass "%s" "%s/"',
+                $this->proxyPass->isHttps() ? 'https' : 'http',
                 $this->proxyPass->getRedirectTo(),
                 $this->proxyPass->getRedirectFrom(),
                 $this->proxyPass->getRedirectTo()
@@ -229,19 +237,74 @@ class Vhost
                 %s
                 %s
                 %s
+                %s
             </VirtualHost>',
-            $this->serverName,
+            $this->listenOn,
             $this->port,
             $serverName,
             $serverAlias,
             $serverAdmin,
             $documentRoot,
+            $this->customDirectives,
             $phpVersion,
             $proxyPass,
             $proxyPassReverse
         );
         
         return $vhost;
+    }
+    
+    /**
+     * @param string $fileName
+     * @param array $vhosts
+     * @param bool $force
+     * @param bool $activate
+     * @return bool
+     */
+    public static function writeMultipleVhosts(string $fileName, array $vhosts, bool $force, bool $activate = true)
+    {
+        $combinedVhost = "";
+        foreach ($vhosts as $vhost) {
+            $combinedVhost .= $vhost->build();
+        }
+        
+        $filePath = sprintf('/etc/apache2/sites-available/%s.conf',
+            $fileName
+        );
+        
+        if (file_exists($filePath && $force == false)) {
+            return false;
+        }
+        
+        $file = fopen($filePath, 'w+');
+        
+        if (!$file || !fwrite($file, $combinedVhost)) {
+            return false;
+        }
+        
+        if (!$activate === true) {
+            return true;
+        }
+        
+        $symlinkPath = sprintf('/etc/apache2/sites-enabled/%s.conf',
+            $fileName
+        );
+        
+        if (file_exists($symlinkPath)) {
+            if (!$force) {
+                exec('sudo /etc/init.d/apache2 reload');
+                
+                return false;
+            }
+            
+            unlink($symlinkPath);
+        }
+        
+        symlink($filePath, $symlinkPath);
+        shell_exec('sudo /etc/init.d/apache2 reload');
+        
+        return true;
+        
     }
     
     /**
@@ -342,7 +405,7 @@ class Vhost
     /**
      * @return string
      */
-    public function getPhpVersion() : string
+    public function getPhpVersion(): string
     {
         return $this->phpVersion;
     }
@@ -351,7 +414,7 @@ class Vhost
      * @param string $phpVersion
      * @return Vhost
      */
-    public function setPhpVersion(string $phpVersion) : Vhost
+    public function setPhpVersion(string $phpVersion): Vhost
     {
         $this->phpVersion = $phpVersion;
         
@@ -381,54 +444,40 @@ class Vhost
     }
     
     /**
-     * @param string $fileName
-     * @param array $vhosts
-     * @param bool $force
-     * @param bool $activate
-     * @return bool
+     * @return string
      */
-    public static function writeMultipleVhosts(string $fileName, array $vhosts, bool $force, bool $activate = true)
+    public function getListenOn(): string
     {
-        $combinedVhost = "";
-        foreach ($vhosts as $vhost) {
-            $combinedVhost .= $vhost->build();
-        }
+        return $this->listenOn;
+    }
     
-        $filePath = sprintf('/etc/apache2/sites-available/%s.conf',
-            $fileName
-        );
-    
-        if (file_exists($filePath  && $force == false)) {
-            return false;
-        }
-    
-        $file = fopen($filePath, 'w+');
-    
-        if (!$file || !fwrite($file, $combinedVhost)) {
-            return false;
-        }
+    /**
+     * @param string $listenOn
+     * @return Vhost
+     */
+    public function setListenOn(string $listenOn): Vhost
+    {
+        $this->listenOn = $listenOn;
         
-        if (!$activate === true) {
-            return true;
-        }
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getCustomDirectives(): string
+    {
+        return $this->customDirectives;
+    }
+    
+    /**
+     * @param string $customDirectives
+     * @return Vhost
+     */
+    public function setCustomDirectives(string $customDirectives): Vhost
+    {
+        $this->customDirectives = $customDirectives;
         
-        $symlinkPath = sprintf('/etc/apache2/sites-enabled/%s.conf',
-            $fileName
-        );
-    
-        if (file_exists($symlinkPath)) {
-            if (!$force) {
-                exec('sudo /etc/init.d/apache2 reload');
-            
-                return false;
-            }
-        
-            unlink($symlinkPath);
-        }
-    
-        symlink($filePath, $symlinkPath);
-        shell_exec('sudo /etc/init.d/apache2 reload');
-    
-        return true;
+        return $this;
     }
 }
